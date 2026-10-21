@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Старт">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Старт — тренування</title>
+<style>
+:root{
+  --bg:#0c0f14; --card:#151a22; --card2:#1c2330; --line:#272f3d;
+  --text:#eef2f7; --muted:#8c98aa; --accent:#ff7a2f; --accent2:#ffb347;
+  --ok:#34d399; --bad:#f87171; --r:18px;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Inter,sans-serif;
+  -webkit-text-size-adjust:100%}
+body{min-height:100vh;min-height:100dvh}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;user-select:none;-webkit-user-select:none}
+h1,h2,h3,p,ul{margin:0}
+#view{max-width:560px;margin:0 auto;padding:calc(18px + var(--safe-t)) 16px calc(96px + var(--safe-b))}
+.hide{display:none!important}
+
+/* tab bar */
+#tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;
+  background:rgba(12,15,20,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);padding-bottom:var(--safe-b)}
+#tabs .in{display:flex;width:100%;max-width:560px}
+#tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;
+  color:var(--muted);font-size:11px;font-weight:600}
+#tabs button svg{width:24px;height:24px}
+#tabs button.on{color:var(--accent)}
+
+/* type */
+.h1{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.sub{color:var(--muted);font-size:14px;margin-top:4px;line-height:1.35}
+.cap{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.hero{border:0;background:linear-gradient(135deg,#ff7a2f 0%,#ff5a1f 55%,#e8431a 100%);color:#fff;padding:20px;
+  box-shadow:0 10px 30px rgba(255,100,40,.25)}
+.hero.rest{background:linear-gradient(135deg,#27334a,#1a2233);box-shadow:none;border:1px solid var(--line)}
+.hero.done{background:linear-gradient(135deg,#10b981,#0d8f68);box-shadow:0 10px 30px rgba(16,185,129,.2)}
+.hero .t{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.hero .s{opacity:.9;font-size:14px;margin-top:4px;line-height:1.35}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;border-radius:14px;
+  font-weight:800;font-size:16px;padding:0 18px}
+.btn.pri{background:#fff;color:#c2410c}
+.btn.acc{background:var(--accent);color:#1a0b02}
+.btn.ghost{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+.btn.sm{min-height:44px;font-size:14px;font-weight:700}
+.btn.danger{background:rgba(248,113,113,.12);color:var(--bad);border:1px solid rgba(248,113,113,.3)}
+.btn{cursor:pointer}
+.btn:active,.ok:active,.chip:active{transform:scale(.98)}
+.btnrow{display:flex;gap:10px}
+.btnrow .btn{flex:1}
+
+/* week strip */
+.week{display:flex;justify-content:space-between;gap:6px}
+.wd{flex:1;text-align:center}
+.wd .l{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px}
+.wd .c{margin:0 auto;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;border:2px solid var(--line);color:var(--muted)}
+.wd.plan .c{border-color:#3b4658;color:var(--text)}
+.wd.today .c{border-color:var(--accent);color:var(--accent)}
+.wd.done .c{background:var(--ok);border-color:var(--ok);color:#052e22}
+.wd.miss .c{border-style:dashed;color:#566176}
+.wd svg{width:18px;height:18px}
+
+/* lists */
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .n{font-weight:700;font-size:15px}
+.row .v{color:var(--accent2);font-weight:800;font-size:15px;white-space:nowrap}
+.dots{display:flex;gap:6px}
+.dots i{width:30px;height:8px;border-radius:4px;background:var(--line)}
+.dots i.on{background:var(--accent)}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar>b{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+
+/* workout */
+.wk-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.wk-top .back{width:44px;height:44px;border-radius:12px;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.wk-top .back svg{width:22px;height:22px}
+.wk-top .tt{font-weight:800;font-size:17px;text-align:center;flex:1}
+.wk-top .el{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700;min-width:56px;text-align:right}
+.ex{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-top:12px;overflow:hidden}
+.ex.open{border-color:#3b4658}
+.ex.fin .exh .nm::after{content:" ✓";color:var(--ok)}
+.exh{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:14px 16px;text-align:left}
+.exh .nm{font-weight:800;font-size:17px}
+.exh .tg{color:var(--accent2);font-weight:800;font-size:14px;white-space:nowrap}
+.exb{padding:0 16px 16px}
+.hint{color:var(--muted);font-size:13px;line-height:1.35;margin-bottom:10px}
+.srow{display:flex;align-items:center;gap:10px;min-height:56px;padding:6px 10px;border-radius:14px;margin-top:8px;background:var(--card2);border:1px solid transparent}
+.srow.active{border-color:var(--accent);background:#221a14}
+.srow.pend{opacity:.45}
+.srow .sn{font-weight:700;font-size:14px;flex:1}
+.srow .done{color:var(--ok);font-weight:800}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:40px;height:40px;border-radius:12px;background:#2a3446;font-size:22px;font-weight:700;line-height:1}
+.stepper b{min-width:42px;text-align:center;font-size:20px;font-variant-numeric:tabular-nums}
+.ok{min-width:64px;height:46px;border-radius:12px;background:var(--accent);color:#1a0b02;font-weight:800;font-size:20px;padding:0 14px}
+.undo{margin-top:10px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:underline;padding:6px 0}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--accent2);font-weight:700;font-size:14px;padding:6px 0;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ "}
+details[open] summary::before{content:"▾ "}
+details ul{padding-left:18px;color:#c5cddb;font-size:14px;line-height:1.5}
+.finbar{position:sticky;bottom:calc(14px + var(--safe-b));margin-top:18px}
+
+/* overlay */
+#ov{position:fixed;inset:0;z-index:50;background:rgba(6,8,12,.99);display:none;align-items:center;justify-content:center;
+  padding:24px;padding-bottom:calc(24px + var(--safe-b))}
+#ov.on{display:flex}
+.ovc{width:100%;max-width:420px;text-align:center}
+.ovc .k{font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--accent2)}
+.ring{position:relative;width:240px;height:240px;margin:22px auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:12}
+.ring .bg{stroke:var(--line)}
+.ring .fg{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:84px;font-weight:800;font-variant-numeric:tabular-nums}
+.ovc .nx{color:var(--muted);font-size:15px;line-height:1.4;margin-bottom:22px}
+.ovc .big{font-size:30px;font-weight:800;letter-spacing:-.4px}
+.opt{width:100%;text-align:left;padding:14px 16px;border-radius:14px;background:var(--card);border:2px solid var(--line);margin-top:10px}
+.opt.on{border-color:var(--accent);background:#221a14}
+.opt .a{font-weight:800;font-size:16px}
+.opt .b{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.35}
+.stat3{display:flex;gap:10px;margin:18px 0}
+.stat3>div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 6px}
+.stat3 b{display:block;font-size:22px;font-weight:800}
+.stat3 span{font-size:12px;color:var(--muted)}
+
+/* progress */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.tile b{display:block;font-size:28px;font-weight:800;letter-spacing:-.5px}
+.tile span{color:var(--muted);font-size:13px}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:10px;font-family:inherit}
+.hist{padding:12px 0;border-top:1px solid var(--line)}
+.hist:first-child{border-top:0}
+.hist .d{font-weight:700;font-size:15px}
+.hist .m{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.4}
+.tag{display:inline-block;font-size:11px;font-weight:700;color:#1a0b02;background:var(--accent2);border-radius:6px;padding:1px 6px;margin-left:6px}
+
+/* settings */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{min-width:48px;height:44px;padding:0 14px;border-radius:12px;background:var(--card2);border:1px solid var(--line);font-weight:700;font-size:14px}
+.chip.on{background:var(--accent);color:#1a0b02;border-color:var(--accent)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px}
+textarea{width:100%;min-height:90px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--text);
+  padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace;resize:vertical}
+.toast{position:fixed;left:50%;bottom:calc(86px + var(--safe-b));transform:translateX(-50%);z-index:60;background:#fff;color:#111;
+  font-weight:700;font-size:14px;padding:10px 16px;border-radius:12px;max-width:90%;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+<main id="view"></main>
+<nav id="tabs"><div class="in" id="tabsin"></div></nav>
+<div id="ov"></div>
+
+<script>
+'use strict';
+/* ============================================================
+   СТАРТ — домашні тренування: присідання, віджимання,
+   мертвий жук, планка. Дані зберігаються лише на пристрої.
+   ============================================================ */
+const LS_KEY = 'fitstart_v1', LS_ACTIVE = 'fitstart_active_v1';
+const DAY_SHORT = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
+const DAY_FULL = ['неділя','понеділок','вівторок','середа','четвер','пʼятниця','субота'];
+const MONTHS = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+const MAX_LEVEL = 7, SESSIONS_PER_LEVEL = 3;
+
+const ORDER = ['squat','pushup','deadbug','plank'];
+const PUSH = {
+  incline: { short: 'з підвищення', a: 'З упором на підвищення', b: 'Руки на столі, лавці чи спинці дивана. Найлегший варіант.' },
+  knees:   { short: 'від колін',    a: 'Від колін',              b: 'Коліна на підлозі, тіло рівною лінією від колін до голови.' },
+  floor:   { short: 'від підлоги',  a: 'Від підлоги',            b: 'Класичні віджимання. Обирай, якщо без проблем робиш 8–10 повторів.' }
+};
+const EX = {
+  squat:   { name: 'Присідання', unit: 'reps', step: 1, cues: [
+    'Ноги на ширині плечей, носки трохи розвернуті назовні.',
+    'Таз іде назад і вниз, ніби сідаєш на стілець.',
+    'Коліна рухаються в напрямку носків, п’яти не відриваються від підлоги.',
+    'Спина рівна, угорі повністю випрямляйся.'] },
+  pushup:  { name: 'Віджимання', unit: 'reps', step: 1, cues: [
+    'Долоні трохи ширше плечей, тіло рівною лінією.',
+    'Лікті під кутом близько 45° до тулуба, а не врозтіч.',
+    'Опускайся, поки груди майже торкнуться опори. Поперек не прогинай.',
+    'Видих на підйомі.'] },
+  deadbug: { name: 'Мертвий жук', unit: 'reps', step: 1, per: 'на кожну сторону', cues: [
+    'Лежачи на спині: руки вгору, коліна зігнуті на 90°.',
+    'Притисни поперек до підлоги і тримай так увесь підхід.',
+    'Повільно опускай протилежні руку й ногу, потім повертай. Чергуй сторони.',
+    'Повтор рахується, коли зробив обидві сторони. Якщо поперек відривається, зменшуй амплітуду.'] },
+  plank:   { name: 'Планка', unit: 'sec', step: 5, cues: [
+    'Лікті під плечима, тіло рівною лінією від п’ят до маківки.',
+    'Напруж живіт і сідниці, не провалюй поперек.',
+    'Дивись у підлогу, дихай рівно, не затримуй дихання.',
+    'Краще коротше, але з правильною технікою.'] }
+};
+// Етапи 1–8: значення для кожної вправи (повтори або секунди)
+const TABLE = {
+  squat:   [10, 12, 14, 16, 18, 20, 22, 25],
+  pushup:  [ 5,  6,  8, 10, 12, 14, 15, 18],
+  deadbug: [ 6,  8, 10, 10, 12, 12, 14, 15],
+  plank:   [20, 25, 30, 35, 40, 45, 50, 60]
+};
+const WARM = ['Кола руками й плечима, 30 с', 'Нахили й повороти корпусу, 30 с',
+  'Марш на місці з піднятими колінами, 30 с', 'Кола тазом і коліньми, 30 с'];
+
+const ICON = {
+  today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+  progress: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+};
+
+/* ---------- допоміжні ---------- */
+let clockSkew = 0;                       // для тестів
+const now = () => Date.now() + clockSkew;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const mmss = s => pad(Math.floor(s / 60)) + ':' + pad(s % 60);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function startOfWeek(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
+function cap1(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+/* ---------- стан ---------- */
+function defaultState() {
+  return { v: 1, settings: { days: [1, 3, 5], rest: 45, push: 'knees', offset: 0, sound: true, setupDone: false }, sessions: [] };
+}
+function sanitize(raw) {
+  const d = defaultState();
+  if (!raw || typeof raw !== 'object') return d;
+  const s = raw.settings || {};
+  if (Array.isArray(s.days)) {
+    const days = [...new Set(s.days.map(Number).filter(x => Number.isInteger(x) && x >= 0 && x <= 6))].sort();
+    if (days.length) d.settings.days = days;
+  }
+  if ([30, 45, 60, 90].includes(Number(s.rest))) d.settings.rest = Number(s.rest);
+  if (PUSH[s.push]) d.settings.push = s.push;
+  if ([-1, 0, 1].includes(Number(s.offset))) d.settings.offset = Number(s.offset);
+  d.settings.sound = s.sound !== false;
+  d.settings.setupDone = !!s.setupDone;
+  if (Array.isArray(raw.sessions)) {
+    d.sessions = raw.sessions.filter(x => x && Number.isFinite(Number(x.ts))).map(x => {
+      const items = {};
+      ORDER.forEach(id => { items[id] = Array.isArray(x.items && x.items[id]) ? x.items[id].map(Number).filter(Number.isFinite) : []; });
+      const ts = Number(x.ts);
+      return { id: Number(x.id) || ts, ts, date: typeof x.date === 'string' ? x.date : ymd(new Date(ts)),
+        level: clamp(Math.round(Number(x.level)) || 0, 0, MAX_LEVEL), push: PUSH[x.push] ? x.push : 'knees',
+        sets: Number(x.sets) || 3, items, dur: Number(x.dur) || 0, partial: !!x.partial };
+    }).sort((a, b) => a.ts - b.ts);
+  }
+  return d;
+}
+function load() { try { return sanitize(JSON.parse(localStorage.getItem(LS_KEY))); } catch (e) { return defaultState(); } }
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }
+function loadActive() {
+  try {
+    const a = JSON.parse(localStorage.getItem(LS_ACTIVE));
+    if (a && a.targets && a.sets && ORDER.every(id => a.targets[id] && Array.isArray(a.sets[id]))) return a;
+  } catch (e) {}
+  return null;
+}
+function saveActive() { try { if (A) localStorage.setItem(LS_ACTIVE, JSON.stringify(A)); else localStorage.removeItem(LS_ACTIVE); } catch (e) {} }
+
+let S = load();
+let A = loadActive();                 // тренування, що триває
+let view = 'today';                   // today | progress | settings | workout
+let openEx = null;                    // null = перша незавершена вправа, '' = усі закриті
+let draft = {};                       // значення в лічильниках
+let T = null;                         // таймер: rest | prep | plank
+let modal = null;                     // setup | summary
+let tickId = null;
+
+/* ---------- програма ---------- */
+const fullCount = () => S.sessions.filter(s => !s.partial).length;
+const curLevel = () => clamp(Math.floor(fullCount() / SESSIONS_PER_LEVEL) + S.settings.offset, 0, MAX_LEVEL);
+const setsFor = l => (l < 4 ? 3 : 4);
+function targetsFor(l) { const o = {}; ORDER.forEach(id => { o[id] = { sets: setsFor(l), value: TABLE[id][l] }; }); return o; }
+function exName(id, push) { return id === 'pushup' ? 'Віджимання ' + PUSH[push || S.settings.push].short : EX[id].name; }
+function fmtTarget(id, t) {
+  if (EX[id].unit === 'sec') return t.sets + ' × ' + t.value + ' с';
+  return t.sets + ' × ' + t.value + (id === 'deadbug' ? ' на сторону' : '');
+}
+function fmtVal(id, v) { return EX[id].unit === 'sec' ? v + ' с' : String(v); }
+
+function weekCount(ws) { // кількість повних тренувань у тижні з початком ws
+  const a = ws.getTime(), b = a + 7 * 864e5;
+  return S.sessions.filter(s => !s.partial && s.ts >= a && s.ts < b).length;
+}
+function planned() { return Math.max(1, S.settings.days.length); }
+function weekStreak() {
+  let streak = 0, ws = startOfWeek(new Date(now()));
+  if (weekCount(ws) >= planned()) streak++;
+  for (let i = 0; i < 520; i++) {
+    ws = new Date(ws); ws.setDate(ws.getDate() - 7);
+    if (weekCount(ws) >= planned()) streak++; else break;
+  }
+  return streak;
+}
+function doneToday() { const t = ymd(new Date(now())); return S.sessions.filter(s => s.date === t && !s.partial).pop() || null; }
+function nextTrainingDay() {
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(now()); d.setDate(d.getDate() + i);
+    if (S.settings.days.includes(d.getDay())) return d;
+  }
+  return null;
+}
+
+/* ---------- звук, вібрація, екран ---------- */
+let AC = null;
+function audio() {
+  if (!S.settings.sound) return null;
+  try {
+    if (!AC) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; AC = new C(); }
+    if (AC.state === 'suspended') AC.resume();
+    return AC;
+  } catch (e) { return null; }
+}
+function beep(freq, dur, vol) {
+  const ac = audio(); if (!ac) return;
+  try {
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = 'sine'; o.frequency.value = freq || 880; o.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(vol || 0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + (dur || 0.15));
+    o.start(t); o.stop(t + (dur || 0.15) + 0.02);
+  } catch (e) {}
+}
+function buzz(p) { try { if (S.settings.sound && navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+let wl = null;
+async function lockScreen() { try { if ('wakeLock' in navigator) wl = await navigator.wakeLock.request('screen'); } catch (e) {} }
+function unlockScreen() { try { if (wl) wl.release(); } catch (e) {} wl = null; }
+function toast(msg) {
+  const old = $('.toast'); if (old) old.remove();
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => { try { t.remove(); } catch (e) {} }, 2600);
+}
+
+/* ============================================================
+   РЕНДЕР
+   ============================================================ */
+function render() {
+  const v = $('#view');
+  if (view === 'workout' && !A) view = 'today';
+  $('#tabs').classList.toggle('hide', view === 'workout');
+  $('#tabsin').innerHTML = [['today', 'Сьогодні'], ['progress', 'Прогрес'], ['settings', 'Налаштування']]
+    .map(([k, n]) => `<button data-a="tab" data-v="${k}" class="${view === k ? 'on' : ''}">${ICON[k]}<span>${n}</span></button>`).join('');
+  v.innerHTML = view === 'today' ? viewToday() : view === 'progress' ? viewProgress() : view === 'settings' ? viewSettings() : viewWorkout();
+  renderOverlay();
+}
+
+/* ---------- Сьогодні ---------- */
+function weekStrip() {
+  const ws = startOfWeek(new Date(now())), today = ymd(new Date(now()));
+  let out = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(ws); d.setDate(ws.getDate() + i);
+    const key = ymd(d), plan = S.settings.days.includes(d.getDay());
+    const done = S.sessions.some(s => s.date === key && !s.partial);
+    const isToday = key === today, past = key < today;
+    const cls = ['wd', plan ? 'plan' : '', isToday ? 'today' : '', done ? 'done' : '', (plan && past && !done) ? 'miss' : ''].join(' ');
+    out += `<div class="${cls}"><div class="l">${DAY_SHORT[d.getDay()]}</div><div class="c">${done ? ICON.check : d.getDate()}</div></div>`;
+  }
+  return `<div class="week">${out}</div>`;
+}
+function viewToday() {
+  const d = new Date(now()), lvl = curLevel(), tg = targetsFor(lvl), isPlan = S.settings.days.includes(d.getDay());
+  const fin = doneToday(), n = fullCount();
+  let hero;
+  if (A) {
+    const tot = ORDER.reduce((s, id) => s + A.targets[id].sets, 0), dn = ORDER.reduce((s, id) => s + A.sets[id].length, 0);
+    hero = `<div class="card hero"><div class="t">Тренування триває</div><div class="s">Виконано підходів: ${dn} з ${tot}</div>
+      <div class="btn pri mt16" data-a="resume" role="button">Продовжити</div></div>
+      <button class="btn ghost sm mt8" data-a="cancel">Скасувати це тренування</button>`;
+  } else if (fin) {
+    const sets = ORDER.reduce((s, id) => s + (fin.items[id] || []).length, 0);
+    hero = `<div class="card hero done"><div class="t">Сьогодні все зроблено ✓</div>
+      <div class="s">${sets} підходів за ${Math.max(1, Math.round(fin.dur / 60))} хв. Відпочивай і відновлюйся.</div></div>`;
+  } else if (isPlan) {
+    hero = `<div class="card hero"><div class="t">Сьогодні тренування</div><div class="s">4 вправи · приблизно 20 хвилин разом із розминкою</div>
+      <div class="btn pri mt16" data-a="start" role="button">Почати тренування</div></div>`;
+  } else {
+    const nx = nextTrainingDay();
+    hero = `<div class="card hero rest"><div class="t">День відпочинку</div>
+      <div class="s">${nx ? 'Наступне тренування: ' + DAY_FULL[nx.getDay()] + ', ' + nx.getDate() + ' ' + MONTHS[nx.getMonth()] : 'Обери дні тренувань у налаштуваннях.'}</div></div>
+      <button class="btn ghost sm mt8" data-a="start">Потренуватися сьогодні все одно</button>`;
+  }
+  const sess = n % SESSIONS_PER_LEVEL;
+  const dots = [0, 1, 2].map(i => `<i class="${i < sess ? 'on' : ''}"></i>`).join('');
+  const wc = weekCount(startOfWeek(new Date(now())));
+  return `
+    <div class="cap">${cap1(DAY_FULL[d.getDay()])}</div>
+    <h1 class="h1">${d.getDate()} ${MONTHS[d.getMonth()]}</h1>
+    <div class="card mt16">${weekStrip()}<div class="sub mt12">Цього тижня: ${wc} з ${planned()} тренувань</div></div>
+    <div class="mt16">${hero}</div>
+    <div class="card mt16">
+      <div class="sw"><div><div class="cap">Твій план</div><div class="h1" style="font-size:20px;margin-top:4px">Етап ${lvl + 1} з ${MAX_LEVEL + 1}</div></div>
+      <div class="dots">${dots}</div></div>
+      <div class="sub">${lvl >= MAX_LEVEL ? 'Це останній етап. Тримай темп.' : 'Після кожних 3 завершених тренувань навантаження трохи зростає.'}</div>
+      <div class="mt8">${ORDER.map(id => `<div class="row"><div class="n">${esc(exName(id))}</div><div class="v">${fmtTarget(id, tg[id])}</div></div>`).join('')}</div>
+    </div>
+    <p class="sub mt16" style="text-align:center">Якщо з'являється біль у суглобах чи спині, зупинись і порадься з лікарем.</p>`;
+}
+
+/* ---------- Тренування ---------- */
+function allDone() { return ORDER.every(id => A.sets[id].length >= A.targets[id].sets); }
+function firstIncomplete() { return ORDER.find(id => A.sets[id].length < A.targets[id].sets) || ''; }
+function totals() {
+  const tot = ORDER.reduce((s, id) => s + A.targets[id].sets, 0), dn = ORDER.reduce((s, id) => s + A.sets[id].length, 0);
+  return { tot, dn };
+}
+function exCard(id) {
+  const t = A.targets[id], lg = A.sets[id], done = lg.length >= t.sets;
+  const cur = openEx === null ? firstIncomplete() : openEx, open = cur === id;
+  const sec = EX[id].unit === 'sec';
+  if (draft[id] == null) draft[id] = t.value;
+  let rows = '';
+  for (let i = 0; i < t.sets; i++) {
+    if (i < lg.length) {
+      rows += `<div class="srow"><span class="sn">Підхід ${i + 1}</span><span class="done">${ICON.check.replace('<svg', '<svg style="width:18px;height:18px;vertical-align:-3px"')} ${fmtVal(id, lg[i])}</span></div>`;
+    } else if (i === lg.length) {
+      rows += `<div class="srow active"><span class="sn">Підхід ${i + 1}</span>
+        <div class="stepper"><button data-a="step" data-ex="${id}" data-d="-1" aria-label="Менше">−</button><b>${sec ? draft[id] + ' с' : draft[id]}</b><button data-a="step" data-ex="${id}" data-d="1" aria-label="Більше">+</button></div>
+        <button class="ok" data-a="${sec ? 'plankstart' : 'logset'}" data-ex="${id}">${sec ? 'Старт' : '✓'}</button></div>`;
+    } else {
+      rows += `<div class="srow pend"><span class="sn">Підхід ${i + 1}</span><span class="sub">${fmtVal(id, t.value)}</span></div>`;
+    }
+  }
+  const per = EX[id].per ? ` · ${EX[id].per}` : '';
+  return `<div class="ex ${open ? 'open' : ''} ${done ? 'fin' : ''}">
+    <button class="exh" data-a="toggle" data-ex="${id}"><span class="nm">${esc(exName(id, A.push))}</span><span class="tg">${fmtTarget(id, t)}</span></button>
+    ${open ? `<div class="exb">
+      <div class="hint">${sec ? 'Тримай планку, поки не завершиться таймер.' : 'Став кількість повторів' + per + ' і натисни ✓ після підходу.'}</div>
+      ${rows}
+      ${lg.length ? `<button class="undo" data-a="undo" data-ex="${id}">Скасувати останній підхід</button>` : ''}
+      <details><summary>Техніка</summary><ul>${EX[id].cues.map(c => `<li>${esc(c)}</li>`).join('')}</ul></details>
+    </div>` : ''}</div>`;
+}
+function viewWorkout() {
+  const { tot, dn } = totals(), pct = Math.round(dn / tot * 100);
+  return `
+    <div class="wk-top"><button class="back" data-a="exit" aria-label="Назад">${ICON.back}</button>
+      <div class="tt">Тренування · етап ${A.level + 1}</div><div class="el" id="elapsed">${mmss(Math.max(0, Math.round((now() - A.startTs) / 1000)))}</div></div>
+    <div class="bar"><b style="width:${pct}%"></b></div>
+    <div class="sub mt8">Підходів: ${dn} з ${tot}</div>
+    <details style="margin-top:12px"><summary>Розминка (2 хв)</summary><ul>${WARM.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>
+    ${ORDER.map(exCard).join('')}
+    <div class="finbar">
+      ${allDone() ? `<button class="btn acc" data-a="finish">Завершити тренування</button>`
+        : dn > 0 ? `<button class="btn ghost sm" data-a="finishearly">Завершити достроково</button>` : ''}
+    </div>`;
+}
+
+/* ---------- Прогрес ---------- */
+function barChart() {
+  const W = 320, H = 130, base = 104, top = 14, n = 8;
+  const ws0 = startOfWeek(new Date(now())), vals = [], labels = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const w = new Date(ws0); w.setDate(w.getDate() - 7 * i);
+    vals.push(weekCount(w)); labels.push(w.getDate() + '.' + pad(w.getMonth() + 1));
+  }
+  const tgt = planned(), maxV = Math.max(tgt, ...vals, 1), bw = 24, gap = (W - 20 - n * bw) / (n - 1);
+  let bars = '';
+  vals.forEach((v, i) => {
+    const x = 10 + i * (bw + gap), h = Math.round((v / maxV) * (base - top)), y = base - h;
+    bars += `<rect x="${x}" y="${v ? y : base - 2}" width="${bw}" height="${v ? h : 2}" rx="5" fill="${v >= tgt ? '#34d399' : '#ff7a2f'}" opacity="${v ? 1 : .35}"/>`;
+    if (v) bars += `<text x="${x + bw / 2}" y="${y - 4}" text-anchor="middle" style="fill:#eef2f7;font-weight:700">${v}</text>`;
+    bars += `<text x="${x + bw / 2}" y="${base + 14}" text-anchor="middle">${labels[i]}</text>`;
+  });
+  const ty = base - Math.round((tgt / maxV) * (base - top));
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Тренування по тижнях">
+    <line x1="4" x2="${W - 4}" y1="${ty}" y2="${ty}" stroke="#566176" stroke-dasharray="4 4"/>${bars}</svg>`;
+}
+function spark(vals) {
+  if (vals.length < 2) return '<div class="sub">Потрібно хоча б 2 тренування для графіка.</div>';
+  const W = 280, H = 44, mx = Math.max(...vals), mn = Math.min(...vals), rg = Math.max(1, mx - mn);
+  const pts = vals.map((v, i) => `${(6 + i * (W - 12) / (vals.length - 1)).toFixed(1)},${(H - 6 - ((v - mn) / rg) * (H - 12)).toFixed(1)}`);
+  const last = pts[pts.length - 1].split(',');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}"><polyline points="${pts.join(' ')}" fill="none" stroke="#ff7a2f" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0]}" cy="${last[1]}" r="4" fill="#ffb347"/></svg>`;
+}
+function bestOf(id, s) { const a = s.items[id] || []; return a.length ? Math.max(...a) : null; }
+function viewProgress() {
+  const n = fullCount(), wc = weekCount(startOfWeek(new Date(now())));
+  if (!S.sessions.length) {
+    return `<h1 class="h1">Прогрес</h1><div class="card mt16"><div class="sub">Тут з'являться твої тренування, графіки й рекорди. Перше тренування завжди найважче, а далі стає легше.</div></div>`;
+  }
+  const exCards = ORDER.map(id => {
+    const series = S.sessions.map(s => bestOf(id, s)).filter(v => v != null);
+    const rec = series.length ? Math.max(...series) : null;
+    return `<div class="card mt12"><div class="sw"><div class="n" style="font-weight:800">${esc(EX[id].name)}</div>
+      <div class="v" style="color:var(--accent2);font-weight:800">${rec == null ? '—' : 'рекорд: ' + fmtVal(id, rec)}</div></div>
+      <div class="sub">Найкращий підхід у кожному тренуванні</div><div class="mt8">${spark(series.slice(-12))}</div></div>`;
+  }).join('');
+  const hist = S.sessions.slice(-20).reverse().map(s => {
+    const d = new Date(s.ts), parts = ORDER.filter(id => (s.items[id] || []).length)
+      .map(id => `${esc(EX[id].name)}: ${s.items[id].map(v => EX[id].unit === 'sec' ? v + 'с' : v).join(' · ')}`).join('<br>');
+    return `<div class="hist"><div class="d">${DAY_SHORT[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}${s.partial ? '<span class="tag">не повністю</span>' : ''}</div><div class="m">${parts}</div></div>`;
+  }).join('');
+  return `<h1 class="h1">Прогрес</h1>
+    <div class="tiles mt16">
+      <div class="tile"><b>${n}</b><span>завершених тренувань</span></div>
+      <div class="tile"><b>${wc} / ${planned()}</b><span>цього тижня</span></div>
+      <div class="tile"><b>${weekStreak()}</b><span>тижнів підряд за планом</span></div>
+      <div class="tile"><b>${curLevel() + 1} / ${MAX_LEVEL + 1}</b><span>етап</span></div>
+    </div>
+    <div class="card mt12"><div class="n" style="font-weight:800">Тренувань по тижнях</div><div class="sub">Пунктир — твоя ціль на тиждень</div><div class="mt8">${barChart()}</div></div>
+    ${exCards}
+    <div class="card mt12"><div class="n" style="font-weight:800;margin-bottom:4px">Історія</div>${hist}</div>`;
+}
+
+/* ---------- Налаштування ---------- */
+function viewSettings() {
+  const st = S.settings;
+  const chips = (arr, cur, act, key) => arr.map(([val, label]) => `<button class="chip ${val === cur ? 'on' : ''}" data-a="${act}" data-${key}="${val}">${label}</button>`).join('');
+  const dayOrder = [1, 2, 3, 4, 5, 6, 0];
+  return `<h1 class="h1">Налаштування</h1>
+    <div class="card mt16"><div class="cap">Дні тренувань</div>
+      <div class="chips">${dayOrder.map(d => `<button class="chip ${st.days.includes(d) ? 'on' : ''}" data-a="setday" data-d="${d}">${DAY_SHORT[d]}</button>`).join('')}</div>
+      <div class="sub mt8">Між тренуваннями бажано робити день відпочинку.</div></div>
+    <div class="card mt12"><div class="cap">Відпочинок між підходами</div>
+      <div class="chips">${chips([[30, '30 с'], [45, '45 с'], [60, '60 с'], [90, '90 с']], st.rest, 'setrest', 'v')}</div></div>
+    <div class="card mt12"><div class="cap">Віджимання</div>
+      ${Object.keys(PUSH).map(k => `<button class="opt ${st.push === k ? 'on' : ''}" data-a="setpush" data-v="${k}"><div class="a">${PUSH[k].a}</div><div class="b">${PUSH[k].b}</div></button>`).join('')}</div>
+    <div class="card mt12"><div class="cap">Складність</div>
+      <div class="chips">${chips([[-1, 'Легше'], [0, 'Стандартно'], [1, 'Важче']], st.offset, 'setoffset', 'v')}</div>
+      <div class="sub mt8">Зсуває весь план на один етап вниз чи вгору.</div></div>
+    <div class="card mt12"><div class="sw"><div><div class="n" style="font-weight:800">Звук і вібрація</div><div class="sub">Сигнали таймера</div></div>
+      <button class="chip ${st.sound ? 'on' : ''}" data-a="togglesound">${st.sound ? 'Увімкнено' : 'Вимкнено'}</button></div></div>
+    <div class="card mt12"><div class="cap">Резервна копія</div>
+      <div class="sub mt8">Скопіюй дані й збережи в нотатках. Так їх можна відновити, якщо змінюєш телефон чи чистиш браузер.</div>
+      <button class="btn ghost sm mt12" data-a="copy">Скопіювати резервну копію</button>
+      <textarea id="restore" class="mt12" placeholder="Встав сюди копію для відновлення" spellcheck="false"></textarea>
+      <button class="btn ghost sm mt8" data-a="restore">Відновити з копії</button>
+      <button class="btn danger sm mt12" data-a="wipe">Стерти всі дані</button></div>
+    <p class="sub mt16" style="text-align:center">Старт · версія 1.0</p>`;
+}
+
+/* ---------- Оверлей: таймери, налаштування старту, підсумок ---------- */
+const RING = 2 * Math.PI * 104;
+function ringHtml(num) {
+  return `<div class="ring"><svg viewBox="0 0 240 240"><circle class="bg" cx="120" cy="120" r="104"/>
+    <circle class="fg" id="ov-ring" cx="120" cy="120" r="104" stroke-dasharray="${RING.toFixed(1)}" stroke-dashoffset="0"/></svg>
+    <div class="num" id="ov-num">${num}</div></div>`;
+}
+function nextUp() {
+  const id = firstIncomplete(); if (!id) return null;
+  return { id, set: A.sets[id].length + 1, of: A.targets[id].sets };
+}
+function renderOverlay() {
+  const ov = $('#ov');
+  let html = '';
+  if (modal && modal.kind === 'setup') {
+    html = `<div class="ovc"><div class="big">Ласкаво просимо</div>
+      <p class="sub mt8">Програма на 8 етапів: присідання, віджимання, мертвий жук і планка. Спершу обери варіант віджимань, який зараз підходить. Його можна змінити в налаштуваннях.</p>
+      ${Object.keys(PUSH).map(k => `<button class="opt ${(modal.pick || S.settings.push) === k ? 'on' : ''}" data-a="pickpush" data-v="${k}"><div class="a">${PUSH[k].a}</div><div class="b">${PUSH[k].b}</div></button>`).join('')}
+      <button class="btn acc mt16" data-a="setupok">Почати</button>
+      <p class="sub mt12">Якщо є проблеми зі спиною чи суглобами, спершу порадься з лікарем.</p></div>`;
+  } else if (modal && modal.kind === 'summary') {
+    const m = modal;
+    html = `<div class="ovc"><div class="big">${m.partial ? 'Тренування збережено' : 'Тренування завершено!'}</div>
+      <div class="stat3"><div><b>${m.sets}</b><span>підходів</span></div><div><b>${Math.max(1, Math.round(m.dur / 60))}</b><span>хвилин</span></div><div><b>${m.week}/${planned()}</b><span>цього тижня</span></div></div>
+      <p class="nx">${esc(m.msg)}</p><button class="btn acc" data-a="closesummary">Готово</button></div>`;
+  } else if (T) {
+    if (T.kind === 'rest') {
+      const nx = nextUp();
+      html = `<div class="ovc"><div class="k">Відпочинок</div>${ringHtml(Math.max(0, Math.ceil((T.end - now()) / 1000)))}
+        <div class="nx">${nx ? 'Далі: ' + esc(exName(nx.id, A.push)) + ', підхід ' + nx.set + ' з ' + nx.of : ''}</div>
+        <div class="btnrow"><button class="btn ghost" data-a="restadd">+15 с</button><button class="btn acc" data-a="restskip">Пропустити</button></div></div>`;
+    } else if (T.kind === 'prep') {
+      html = `<div class="ovc"><div class="k">Приготуйся</div>${ringHtml(Math.max(0, Math.ceil((T.end - now()) / 1000)))}
+        <div class="nx">Прийми положення планки. Старт через кілька секунд.</div>
+        <button class="btn ghost" data-a="plankcancel">Скасувати</button></div>`;
+    } else {
+      html = `<div class="ovc"><div class="k">Планка · ціль ${T.total} с</div>${ringHtml(Math.max(0, Math.ceil((T.end - now()) / 1000)))}
+        <div class="nx">Тримай корпус рівно й дихай. Якщо техніка розвалюється, зупиняйся.</div>
+        <button class="btn acc" data-a="plankstop">Завершити раніше</button></div>`;
+    }
+  }
+  ov.innerHTML = html;
+  ov.classList.toggle('on', !!html);
+  if (T) updateRing();
+}
+function updateRing() {
+  const num = $('#ov-num'), ring = $('#ov-ring'); if (!T || !num || !ring) return;
+  const rem = Math.max(0, Math.ceil((T.end - now()) / 1000));
+  num.textContent = rem;
+  const frac = clamp((T.end - now()) / (T.end - T.start), 0, 1);
+  ring.setAttribute('stroke-dashoffset', (RING * (1 - frac)).toFixed(1));
+}
+
+/* ============================================================
+   ДІЇ
+   ============================================================ */
+function startWorkout() {
+  if (A) { view = 'workout'; render(); return; }
+  const lvl = curLevel();
+  A = { startTs: now(), level: lvl, push: S.settings.push, targets: targetsFor(lvl), sets: { squat: [], pushup: [], deadbug: [], plank: [] } };
+  draft = {}; openEx = null; saveActive();
+  view = 'workout'; lockScreen(); audio(); render(); window.scrollTo(0, 0);
+}
+function logSet(id, val) {
+  if (!A || A.sets[id].length >= A.targets[id].sets) return;
+  A.sets[id].push(Math.max(1, Math.round(val)));
+  draft[id] = A.sets[id][A.sets[id].length - 1];
+  saveActive();
+  if (openEx === null || openEx === id) { if (A.sets[id].length >= A.targets[id].sets) openEx = null; }
+  if (allDone()) { T = null; beep(988, .3); buzz([60, 40, 60]); render(); window.scrollTo(0, document.body.scrollHeight); return; }
+  startTimer('rest', S.settings.rest);
+}
+function startTimer(kind, secs, extra) {
+  const t0 = now();
+  T = Object.assign({ kind, start: t0, end: t0 + secs * 1000, total: secs, lastRem: null }, extra || {});
+  ensureTick(); render();
+}
+function ensureTick() { if (!tickId) tickId = setInterval(tick, 250); }
+function stopTick() { if (tickId) { clearInterval(tickId); tickId = null; } }
+function tick() {
+  const el = $('#elapsed'); if (el && A && view === 'workout') el.textContent = mmss(Math.max(0, Math.round((now() - A.startTs) / 1000)));
+  if (!T) { if (!A) stopTick(); return; }
+  const rem = Math.max(0, Math.ceil((T.end - now()) / 1000));
+  if (rem !== T.lastRem) {
+    if (rem > 0 && rem <= 3) { beep(660, .08); buzz(30); }
+    T.lastRem = rem;
+  }
+  updateRing();
+  if (now() >= T.end) timerDone();
+}
+function timerDone() {
+  const t = T; if (!t) return;
+  if (t.kind === 'rest') { T = null; beep(988, .35); buzz([80, 50, 80]); render(); }
+  else if (t.kind === 'prep') {
+    const secs = t.value; beep(988, .25); startTimer('plank', secs, { ex: t.ex });
+  } else if (t.kind === 'plank') {
+    T = null; beep(988, .5); buzz([120, 60, 120]); logSet(t.ex, t.total);
+  }
+}
+function finish(partial) {
+  if (!A) return;
+  const items = {}; let total = 0;
+  ORDER.forEach(id => { items[id] = A.sets[id].slice(); total += items[id].length; });
+  T = null;
+  if (!total) { abandon(); return; }
+  const ts = now();
+  S.sessions.push({ id: ts, ts, date: ymd(new Date(ts)), level: A.level, push: A.push, sets: A.targets.squat.sets,
+    items, dur: Math.round((ts - A.startTs) / 1000), partial: !!partial });
+  save();
+  const lvlBefore = A.level, dur = Math.round((ts - A.startTs) / 1000), n = fullCount();
+  const week = weekCount(startOfWeek(new Date(ts)));
+  let msg;
+  if (partial) msg = 'Це тренування не додається до просування по етапах. Наступного разу вийде більше.';
+  else if (curLevel() > lvlBefore) msg = 'Новий етап! Навантаження трохи зросло.';
+  else if (curLevel() >= MAX_LEVEL) msg = 'Ти на останньому етапі. Тримай темп.';
+  else msg = 'Ще ' + (SESSIONS_PER_LEVEL - (n % SESSIONS_PER_LEVEL)) + ' тренування до наступного етапу.';
+  const sets = total;
+  A = null; saveActive(); unlockScreen(); draft = {}; openEx = null; view = 'today';
+  modal = { kind: 'summary', sets, dur, week, msg, partial: !!partial };
+  render(); window.scrollTo(0, 0);
+}
+function abandon() { A = null; saveActive(); T = null; unlockScreen(); draft = {}; openEx = null; view = 'today'; render(); }
+
+function act(a, ds) {
+  const id = ds.ex;
+  switch (a) {
+    case 'tab': view = ds.v; render(); window.scrollTo(0, 0); break;
+    case 'start': startWorkout(); break;
+    case 'resume': view = 'workout'; lockScreen(); render(); break;
+    case 'exit': view = 'today'; unlockScreen(); render(); break;
+    case 'cancel': if (confirm('Скасувати це тренування? Записані підходи не збережуться.')) abandon(); break;
+    case 'toggle': openEx = (openEx === null ? firstIncomplete() : openEx) === id ? '' : id; render(); break;
+    case 'step': {
+      const st = EX[id].step, min = EX[id].unit === 'sec' ? 5 : 1;
+      draft[id] = clamp((draft[id] == null ? A.targets[id].value : draft[id]) + Number(ds.d) * st, min, 300); render(); break;
+    }
+    case 'logset': audio(); logSet(id, draft[id] == null ? A.targets[id].value : draft[id]); break;
+    case 'undo': if (A && A.sets[id].length) { A.sets[id].pop(); saveActive(); render(); } break;
+    case 'plankstart': {
+      audio();
+      const v = draft[id] == null ? A.targets[id].value : draft[id];
+      startTimer('prep', 5, { ex: id, value: v }); break;
+    }
+    case 'plankcancel': T = null; render(); break;
+    case 'plankstop': {
+      if (T && T.kind === 'plank') { const el = Math.round((now() - T.start) / 1000), ex = T.ex; T = null; if (el >= 1) logSet(ex, el); else render(); }
+      break;
+    }
+    case 'restskip': T = null; render(); break;
+    case 'restadd': if (T && T.kind === 'rest') { T.end += 15000; T.total += 15; updateRing(); } break;
+    case 'finish': finish(false); break;
+    case 'finishearly': if (confirm('Завершити тренування достроково? Підходи збережуться, але воно не просуне тебе на наступний етап.')) finish(true); break;
+    case 'closesummary': modal = null; render(); break;
+    case 'pickpush': modal.pick = ds.v; renderOverlay(); break;
+    case 'setupok': S.settings.push = modal.pick || S.settings.push; S.settings.setupDone = true; save(); modal = null; render(); break;
+    case 'setday': {
+      const d = Number(ds.d), i = S.settings.days.indexOf(d);
+      if (i >= 0) { if (S.settings.days.length > 1) S.settings.days.splice(i, 1); else toast('Потрібен хоча б один день'); }
+      else S.settings.days.push(d);
+      S.settings.days.sort(); save(); render(); break;
+    }
+    case 'setrest': S.settings.rest = Number(ds.v); save(); render(); break;
+    case 'setpush': S.settings.push = ds.v; save(); render(); break;
+    case 'setoffset': S.settings.offset = Number(ds.v); save(); render(); break;
+    case 'togglesound': S.settings.sound = !S.settings.sound; save(); render(); break;
+    case 'copy': {
+      const txt = JSON.stringify(S);
+      const ok = () => toast('Копію скопійовано');
+      const fallback = () => { const ta = $('#restore'); ta.value = txt; ta.focus(); ta.select(); toast('Виділи текст і скопіюй вручну'); };
+      try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, fallback); else fallback(); } catch (e) { fallback(); }
+      break;
+    }
+    case 'restore': {
+      const raw = ($('#restore').value || '').trim(); if (!raw) { toast('Встав копію в поле'); break; }
+      let parsed; try { parsed = JSON.parse(raw); } catch (e) { toast('Це не схоже на копію даних'); break; }
+      if (!parsed || !Array.isArray(parsed.sessions) || !parsed.settings) { toast('Це не схоже на копію даних'); break; }
+      if (!confirm('Замінити поточні дані копією?')) break;
+      S = sanitize(parsed); S.settings.setupDone = true; save(); toast('Дані відновлено'); render(); break;
+    }
+    case 'wipe':
+      if (confirm('Стерти всі тренування й налаштування? Це не можна скасувати.')) {
+        S = defaultState(); A = null; T = null; saveActive(); save(); unlockScreen(); view = 'today'; modal = { kind: 'setup' }; render();
+      }
+      break;
+  }
+}
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  act(el.dataset.a, el.dataset);
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') { if (A && view === 'workout') lockScreen(); tick(); }
+});
+
+/* ---------- запуск ---------- */
+if (!S.settings.setupDone) modal = { kind: 'setup' };
+if (A) ensureTick();
+render();
+window.__fs = { get S() { return S; }, get A() { return A; }, get T() { return T; }, skew(ms) { clockSkew += ms; tick(); }, tick, render, ymd, curLevel, targetsFor, weekStreak };
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+</script>
+</body>
+</html>
